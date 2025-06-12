@@ -1,0 +1,26 @@
+{
+  "elastic": {
+    "node": "http://localhost:9200",
+    "apiKey": "test-elastic-api-key"
+  },
+  "kibana": {
+    "node": "http://localhost:5601",
+    "apiKey": "test-kibana-api-key"
+  },
+  "useAI": true,
+  "openaiApiKey": "test-openai-key",
+  "useClaudeAI": false,
+  "claudeApiKey": "test-claude-key",
+  "claudeModel": "claude-3-5-sonnet-20241022",
+  "useAzureOpenAI": false,
+  "azureOpenAIApiKey": "",
+  "azureOpenAIEndpoint": "",
+  "azureOpenAIDeployment": "",
+  "azureOpenAIApiVersion": "2023-05-15",
+  "mitre": {
+    "enableAttackChains": true,
+    "maxTechniquesPerAlert": 2,
+    "chainProbability": 0.15,
+    "maxChainLength": 3
+  }
+}
