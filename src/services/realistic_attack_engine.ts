@@ -93,28 +93,35 @@ export class RealisticAttackEngine {
     console.log(`🎭 Generating realistic ${config.campaignType} campaign...`);
 
     // 1. Generate the base attack simulation
+    console.log(`⏳ Step 1/5: Generating attack simulation...`);
     const campaign = await this.attackEngine.generateAttackSimulation(
       config.campaignType,
       config.complexity
     );
 
-    console.log(`📋 Campaign generated: ${campaign.stages.length} stages`);
+    console.log(`✅ Campaign generated: ${campaign.stages.length} stages`);
 
     // 2. Generate realistic logs for each stage
+    console.log(`⏳ Step 2/5: Generating logs for ${campaign.stages.length} stages...`);
     const stageLogs = await this.generateStageBasedLogs(campaign, config);
 
-    console.log(`📊 Generated ${stageLogs.reduce((sum, stage) => sum + stage.logs.length, 0)} stage-based logs`);
+    console.log(`✅ Generated ${stageLogs.reduce((sum, stage) => sum + stage.logs.length, 0)} stage-based logs`);
 
     // 3. Simulate detection and generate alerts
+    console.log(`⏳ Step 3/5: Simulating detection and generating alerts...`);
     const { detectedAlerts, missedActivities } = await this.simulateDetection(stageLogs, config);
 
-    console.log(`🚨 Simulated detection: ${detectedAlerts.length} alerts, ${missedActivities.length} missed activities`);
+    console.log(`✅ Detection simulated: ${detectedAlerts.length} alerts, ${missedActivities.length} missed activities`);
 
     // 4. Create complete timeline
+    console.log(`⏳ Step 4/5: Building campaign timeline...`);
     const timeline = this.buildCampaignTimeline(campaign, stageLogs, detectedAlerts);
 
     // 5. Generate investigation guide
+    console.log(`⏳ Step 5/5: Generating investigation guide...`);
     const investigationGuide = this.generateInvestigationGuide(campaign, stageLogs, detectedAlerts);
+
+    console.log(`✅ Campaign generation complete!`);
 
     return {
       campaign,
@@ -135,13 +142,15 @@ export class RealisticAttackEngine {
   ): Promise<CampaignStageLogs[]> {
     const stageLogs: CampaignStageLogs[] = [];
 
+    let stageIndex = 0;
     for (const stage of campaign.stages) {
-      console.log(`  📝 Generating logs for stage: ${stage.name} (${stage.techniques.join(', ')})`);
+      stageIndex++;
+      console.log(`    📝 Stage ${stageIndex}/${campaign.stages.length}: ${stage.name} (${stage.techniques.length} techniques)`);
 
       const logs: any[] = [];
 
-      // Generate logs for each technique in the stage
-      for (const technique of stage.techniques) {
+      // Generate logs for all techniques in parallel
+      const techniquePromises = stage.techniques.map(async (technique) => {
         try {
           // Create a mock alert to use correlation engine  
           const mockAlert = {
@@ -167,11 +176,16 @@ export class RealisticAttackEngine {
             }
           );
 
-          logs.push(...techniqueeLogs);
+          return techniqueeLogs;
         } catch (error: any) {
           console.warn(`Warning: Could not generate logs for technique ${technique}:`, error?.message || 'Unknown error');
+          return [];
         }
-      }
+      });
+
+      // Wait for all technique logs to complete in parallel
+      const allTechniqueLogs = await Promise.all(techniquePromises);
+      allTechniqueLogs.forEach(techniqueLogs => logs.push(...techniqueLogs));
 
       stageLogs.push({
         stageId: stage.id,

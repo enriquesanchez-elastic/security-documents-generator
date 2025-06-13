@@ -418,18 +418,23 @@ Generate an alert that shows CLEAR CORRELATION to this attack campaign stage. In
         let generatedAlert: Record<string, unknown> = {};
 
         if (claude) {
-          // Use Claude API
-          const response = await claude.messages.create({
-            model: config.claudeModel || 'claude-3-5-sonnet-20241022',
-            max_tokens: 2000,
-            messages: [
-              {
-                role: 'user',
-                content: `${systemPrompt}\n\n${userPrompt}\n\n${JSON_RESPONSE_INSTRUCTION}`,
-              },
-            ],
-            temperature: 0.7,
-          });
+          // Use Claude API with timeout
+          const response = await Promise.race([
+            claude.messages.create({
+              model: config.claudeModel || 'claude-3-5-sonnet-20241022',
+              max_tokens: 2000,
+              messages: [
+                {
+                  role: 'user',
+                  content: `${systemPrompt}\n\n${userPrompt}\n\n${JSON_RESPONSE_INSTRUCTION}`,
+                },
+              ],
+              temperature: 0.7,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Claude API timeout')), 30000)
+            ),
+          ]);
 
           const content = response.content[0];
           if (content.type === 'text') {
@@ -445,15 +450,20 @@ Generate an alert that shows CLEAR CORRELATION to this attack campaign stage. In
               ? config.azureOpenAIDeployment
               : 'gpt-4o';
 
-          const response = await openai.chat.completions.create({
-            model: modelName,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.7,
-          });
+          const response = await Promise.race([
+            openai.chat.completions.create({
+              model: modelName,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.7,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('OpenAI API timeout')), 30000)
+            ),
+          ]);
 
           generatedAlert = safeJsonParse(
             response.choices[0].message.content || '{}',
@@ -589,15 +599,20 @@ export const generateAIEvent = async (
               ? config.azureOpenAIDeployment
               : 'gpt-4o';
 
-          const response = await openai.chat.completions.create({
-            model: modelName,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.7,
-          });
+          const response = await Promise.race([
+            openai.chat.completions.create({
+              model: modelName,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.7,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('OpenAI API timeout')), 30000)
+            ),
+          ]);
 
           generatedEvent = safeJsonParse(
             response.choices[0].message.content || '{}',
@@ -700,17 +715,22 @@ export const generateAIAlertBatch = async (
 
           if (claude) {
             // Use Claude API
-            response = await claude.messages.create({
-              model: config.claudeModel || 'claude-3-5-sonnet-20241022',
-              max_tokens: 4000,
-              messages: [
-                {
-                  role: 'user',
-                  content: `${systemPrompt}\n\n${userPrompt}\n\n${JSON_RESPONSE_INSTRUCTION}`,
-                },
-              ],
-              temperature: 0.7,
-            });
+            response = await Promise.race([
+              claude.messages.create({
+                model: config.claudeModel || 'claude-3-5-sonnet-20241022',
+                max_tokens: 4000,
+                messages: [
+                  {
+                    role: 'user',
+                    content: `${systemPrompt}\n\n${userPrompt}\n\n${JSON_RESPONSE_INSTRUCTION}`,
+                  },
+                ],
+                temperature: 0.7,
+              }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Claude API timeout')), 30000)
+              ),
+            ]);
           } else if (openai) {
             // Use OpenAI API
             const modelName =
@@ -718,15 +738,20 @@ export const generateAIAlertBatch = async (
                 ? config.azureOpenAIDeployment
                 : 'gpt-4o';
 
-            response = await openai.chat.completions.create({
-              model: modelName,
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt },
-              ],
-              response_format: { type: 'json_object' },
-              temperature: 0.7,
-            });
+            response = await Promise.race([
+              openai.chat.completions.create({
+                model: modelName,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: userPrompt },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.7,
+              }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('OpenAI API timeout')), 30000)
+              ),
+            ]);
           }
 
           let generatedAlerts = [];

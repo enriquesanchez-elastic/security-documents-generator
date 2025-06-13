@@ -736,6 +736,9 @@ program
             }
           };
           
+          console.log(`\n📊 Processing ${realisticConfig.eventCount} events across ${realisticConfig.targetCount} targets...`);
+          console.log(`🔄 Progress will be shown below:`);
+          
           const realisticResult = await realisticEngine.generateRealisticCampaign(realisticConfig);
           
           console.log(`\n🎊 Realistic Campaign Generated Successfully:`);
@@ -753,60 +756,144 @@ program
             console.log(`  ${step.step}. ${step.action}`);
           });
           
-          // Index the data to Elasticsearch
-          console.log('\n📤 Indexing realistic campaign data...');
+          // Index the data to Elasticsearch (with option to skip)
+          const skipIndexing = process.env.SKIP_INDEXING === 'true';
+          if (skipIndexing) {
+            console.log('\n⚠️  Skipping indexing (SKIP_INDEXING=true)');
+          } else {
+            console.log('\n📤 Indexing realistic campaign data...');
+          }
           
-          // Import necessary functions
-          const { getEsClient } = await import('./commands/utils/indices');
-          const { indexCheck } = await import('./commands/utils/indices');
-          const logMappings = await import('./mappings/log_mappings.json', { assert: { type: 'json' } });
+          // Sanitization function to prevent indexing errors
+          const sanitizeLogForIndexing = (log: any): any => {
+            const sanitized = { ...log };
+            
+            // Fix network.bytes field - ensure it's a number, not an object
+            if (sanitized['network.bytes'] && typeof sanitized['network.bytes'] === 'object') {
+              const bytes = sanitized['network.bytes'];
+              if (bytes.transferred) {
+                sanitized['network.bytes'] = bytes.transferred;
+              } else if (bytes.sent && bytes.received) {
+                sanitized['network.bytes'] = bytes.sent + bytes.received;
+              } else {
+                delete sanitized['network.bytes'];
+              }
+            }
+            
+            // Ensure all numeric fields are actually numbers
+            const numericFields = ['network.bytes', 'source.bytes', 'destination.bytes', 'file.size'];
+            numericFields.forEach(field => {
+              if (sanitized[field] && typeof sanitized[field] !== 'number') {
+                const parsed = parseInt(String(sanitized[field]).replace(/[^0-9]/g, ''), 10);
+                if (!isNaN(parsed)) {
+                  sanitized[field] = parsed;
+                } else {
+                  delete sanitized[field];
+                }
+              }
+            });
+            
+            return sanitized;
+          };
           
-          const client = getEsClient();
-          const indexOperations: unknown[] = [];
-          
-          // Index all stage logs
-          for (const stage of realisticResult.stageLogs) {
-            for (const log of stage.logs) {
-              const dataset = log['data_stream.dataset'] || 'generic.log';
-              const namespace = log['data_stream.namespace'] || 'default';
-              const indexName = `logs-${dataset}-${namespace}`;
-              
-              // Ensure index exists
-              await indexCheck(indexName, {
-                mappings: logMappings.default as any,
-              });
-              
+          if (!skipIndexing) {
+            // Import necessary functions
+            const { getEsClient } = await import('./commands/utils/indices');
+            const { indexCheck } = await import('./commands/utils/indices');
+            const logMappings = await import('./mappings/log_mappings.json', { assert: { type: 'json' } });
+            
+            const client = getEsClient();
+            const indexOperations: unknown[] = [];
+            
+            // Index all stage logs
+            for (const stage of realisticResult.stageLogs) {
+              for (const log of stage.logs) {
+                const dataset = log['data_stream.dataset'] || 'generic.log';
+                const namespace = log['data_stream.namespace'] || 'default';
+                const indexName = `logs-${dataset}-${namespace}`;
+                
+                // Ensure index exists with timeout
+                try {
+                  const indexCheckPromise = indexCheck(indexName, {
+                    mappings: logMappings.default as any,
+                  });
+                  const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Index check timeout')), 10000)
+                  );
+                  await Promise.race([indexCheckPromise, timeoutPromise]);
+                } catch (error) {
+                  console.warn(`⚠️  Could not check/create index ${indexName}:`, error instanceof Error ? error.message : error);
+                  // Continue without this log
+                  continue;
+                }
+                
+                indexOperations.push({
+                  create: {
+                    _index: indexName,
+                    _id: faker.string.uuid(),
+                  },
+                });
+                // Clean log data to prevent indexing errors
+                const cleanLog = sanitizeLogForIndexing(log);
+                indexOperations.push(cleanLog);
+              }
+            }
+            
+            // Index detected alerts
+            const alertIndex = `.internal.alerts-security.alerts-${options.space}-000001`;
+            for (const alert of realisticResult.detectedAlerts) {
               indexOperations.push({
                 create: {
-                  _index: indexName,
-                  _id: faker.string.uuid(),
+                  _index: alertIndex,
+                  _id: alert['kibana.alert.uuid'],
                 },
               });
-              indexOperations.push(log);
+              indexOperations.push(alert);
             }
-          }
-          
-          // Index detected alerts
-          const alertIndex = `.internal.alerts-security.alerts-${options.space}-000001`;
-          for (const alert of realisticResult.detectedAlerts) {
-            indexOperations.push({
-              create: {
-                _index: alertIndex,
-                _id: alert['kibana.alert.uuid'],
-              },
-            });
-            indexOperations.push(alert);
-          }
-          
-          // Bulk index everything
-          if (indexOperations.length > 0) {
-            const batchSize = 1000;
-            for (let i = 0; i < indexOperations.length; i += batchSize) {
-              const batch = indexOperations.slice(i, i + batchSize);
-              await client.bulk({ body: batch, refresh: true });
+            
+            // Bulk index everything with timeout and error handling
+            if (indexOperations.length > 0) {
+              console.log(`📦 Indexing ${indexOperations.length / 2} documents...`);
+              const batchSize = 200; // Smaller batch size to prevent timeouts
+              let successCount = 0;
+              let errorCount = 0;
               
-              if (i + batchSize < indexOperations.length) {
-                process.stdout.write('.');
+              try {
+                for (let i = 0; i < indexOperations.length; i += batchSize) {
+                  const batch = indexOperations.slice(i, i + batchSize);
+                  
+                  // Add timeout to bulk operation
+                  const bulkPromise = client.bulk({ 
+                    body: batch, 
+                    refresh: false, // Don't refresh immediately to improve performance
+                    timeout: '30s'
+                  });
+                  
+                  const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Bulk indexing timeout')), 30000)
+                  );
+                  
+                  const result = await Promise.race([bulkPromise, timeoutPromise]) as any;
+                  
+                  if (result.errors) {
+                    const errors = result.items.filter((item: any) => item.create?.error || item.index?.error);
+                    errorCount += errors.length;
+                    if (errors.length > 0) {
+                      console.warn(`⚠️  ${errors.length} indexing errors in batch`);
+                    }
+                  } else {
+                    successCount += batch.length / 2; // Each document has 2 operations (header + body)
+                  }
+                  
+                  process.stdout.write('.');
+                }
+                console.log(`\n✅ Indexed ${successCount} documents successfully`);
+                if (errorCount > 0) {
+                  console.log(`⚠️  ${errorCount} documents failed to index`);
+                }
+              } catch (error) {
+                console.error(`❌ Indexing failed:`, error instanceof Error ? error.message : error);
+                console.log(`📝 Continuing without indexing...`);
               }
             }
           }
@@ -816,6 +903,9 @@ program
           console.log(`🔍 Filter logs with: logs-*`);
           console.log(`🚨 View alerts in Security app`);
           console.log(`📈 ${realisticResult.detectedAlerts.length} alerts triggered by ${realisticResult.stageLogs.reduce((sum, stage) => sum + stage.logs.length, 0)} source logs`);
+          
+          // When realistic mode is enabled, skip sophisticated generation
+          return;
         }
 
         // Generate sophisticated attack simulation with correlation (original code)
