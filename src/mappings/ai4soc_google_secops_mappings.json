@@ -1,5 +1,8 @@
 {
   "properties": {
+    "@timestamp": {
+      "type": "date"
+    },
     "alert": {
       "properties": {
         "alertId": {

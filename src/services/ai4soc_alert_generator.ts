@@ -115,6 +115,7 @@ export class AI4SOCAlertGenerator {
     }
 
     const splunkAlert = {
+      '@timestamp': timestamp,  // Standard Kibana timestamp field
       _time: timestamp,
       _raw: `${timestamp} ${hostName} Suspicious ${eventType.replace('_', ' ')} detected`,
       source: 'ai4soc:security',
@@ -216,6 +217,7 @@ export class AI4SOCAlertGenerator {
     }
 
     const sentinelOneAlert = {
+      '@timestamp': timestamp,  // Standard Kibana timestamp field
       id: alertId,
       alertInfo: {
         alertId: alertId,
@@ -380,6 +382,7 @@ export class AI4SOCAlertGenerator {
     }
 
     const googleSecOpsAlert = {
+      '@timestamp': timestamp,  // Standard Kibana timestamp field
       alert: {
         alertId: alertId,
         title: `Suspicious ${eventType.replace('_', ' ')} Activity`,
