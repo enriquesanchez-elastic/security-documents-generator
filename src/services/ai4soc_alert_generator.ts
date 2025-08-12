@@ -32,6 +32,61 @@ export interface AI4SOCAlert {
 export class AI4SOCAlertGenerator {
 
   /**
+   * Create base Kibana Security alert structure for AI4SOC
+   */
+  private createBaseKibanaAlert(timestamp: string, userName: string, hostName: string, severity: string, platform: string): Record<string, any> {
+    const ruleId = faker.string.uuid();
+    const alertId = faker.string.uuid();
+    
+    return {
+      '@timestamp': timestamp,
+      'kibana.alert.uuid': alertId,
+      'kibana.alert.start': timestamp,
+      'kibana.alert.last_detected': timestamp,
+      'kibana.version': '8.15.0',
+      'kibana.space_ids': ['default'],
+      'kibana.alert.rule.uuid': ruleId,
+      'kibana.alert.rule.rule_id': `ai4soc-${platform}-${faker.string.alphanumeric(8)}`,
+      'kibana.alert.rule.name': `AI4SOC ${platform.charAt(0).toUpperCase() + platform.slice(1)} Security Alert`,
+      'kibana.alert.rule.category': 'AI4SOC Alert Rule',
+      'kibana.alert.rule.consumer': 'siem',
+      'kibana.alert.rule.producer': 'siem',
+      'kibana.alert.rule.rule_type_id': 'siem.queryRule',
+      'kibana.alert.rule.parameters': {
+        description: `AI4SOC ${platform} platform alert generation`,
+        risk_score: severity === 'critical' ? 100 : severity === 'high' ? 75 : 50,
+        severity: severity,
+        query: `ai4soc.platform: "${platform}"`,
+        related_integrations: [{
+          package: platform === 'splunk' ? 'splunk' : 
+                   platform === 'sentinelone' ? 'sentinel_one' : 
+                   'gcp_security_command_center',  // Use proper Google Cloud package
+          version: platform === 'splunk' ? '1.0.0' : 
+                   platform === 'sentinelone' ? '1.3.0' : 
+                   '1.0.0'
+        }]
+      },
+      'kibana.alert.status': 'active',
+      'kibana.alert.workflow_status': 'open',
+      'kibana.alert.severity': severity,
+      'kibana.alert.risk_score': severity === 'critical' ? 100 : severity === 'high' ? 75 : 50,
+      'kibana.alert.reason': `AI4SOC ${platform} alert detected on ${hostName}`,
+      'event.kind': 'signal',
+      'user.name': userName,
+      'host.name': hostName,
+      'ai4soc': {
+        platform: platform,
+        version: '1.0.0',
+        generator: 'security-documents-generator'
+      },
+      // Add integration field for Integration column display
+      'relatedIntegration': platform === 'splunk' ? 'splunk' : 
+                           platform === 'sentinelone' ? 'sentinel_one' : 
+                           'gcp_security_command_center'
+    };
+  }
+
+  /**
    * Generate AI4SOC platform-specific alerts
    */
   generateAlert(options: AI4SOCAlertOptions): AI4SOCAlert[] {
@@ -114,14 +169,18 @@ export class AI4SOCAlertGenerator {
       };
     }
 
+    // Create base Kibana Security alert structure
+    const baseKibanaAlert = this.createBaseKibanaAlert(timestamp, userName, hostName, severity, 'splunk');
+    
     const splunkAlert = {
-      '@timestamp': timestamp,  // Standard Kibana timestamp field
+      ...baseKibanaAlert,  // Include all Kibana alert fields
+      // Splunk-specific fields
       _time: timestamp,
       _raw: `${timestamp} ${hostName} Suspicious ${eventType.replace('_', ' ')} detected`,
-      source: 'ai4soc:security',
+      'splunk.source': 'ai4soc:security',  // Renamed to avoid conflict with ECS source field
       sourcetype: 'ai4soc:alert',
       index: 'ai4soc_security',
-      host: hostName,
+      'splunk.host': hostName,  // Renamed to avoid conflict with ECS host field
       splunk_server: faker.internet.domainName(),
       event: {
         id: eventId,
@@ -166,7 +225,7 @@ export class AI4SOCAlertGenerator {
     return {
       platform: 'splunk',
       alert: splunkAlert,
-      indexPattern: 'ai4soc-splunk-*'
+      indexPattern: '.alerts-security.alerts-*'  // Use standard Kibana Security alert index
     };
   }
 
@@ -216,8 +275,12 @@ export class AI4SOCAlertGenerator {
       };
     }
 
+    // Create base Kibana Security alert structure
+    const baseKibanaAlert = this.createBaseKibanaAlert(timestamp, userName, hostName, severity, 'sentinelone');
+    
     const sentinelOneAlert = {
-      '@timestamp': timestamp,  // Standard Kibana timestamp field
+      ...baseKibanaAlert,  // Include all Kibana alert fields
+      // SentinelOne-specific fields
       id: alertId,
       alertInfo: {
         alertId: alertId,
@@ -303,7 +366,7 @@ export class AI4SOCAlertGenerator {
     return {
       platform: 'sentinelone',
       alert: sentinelOneAlert,
-      indexPattern: 'ai4soc-sentinelone-*'
+      indexPattern: '.alerts-security.alerts-*'  // Use standard Kibana Security alert index
     };
   }
 
@@ -381,8 +444,12 @@ export class AI4SOCAlertGenerator {
       };
     }
 
+    // Create base Kibana Security alert structure
+    const baseKibanaAlert = this.createBaseKibanaAlert(timestamp, userName, hostName, severity, 'google-secops');
+    
     const googleSecOpsAlert = {
-      '@timestamp': timestamp,  // Standard Kibana timestamp field
+      ...baseKibanaAlert,  // Include all Kibana alert fields
+      // Google SecOps-specific fields
       alert: {
         alertId: alertId,
         title: `Suspicious ${eventType.replace('_', ' ')} Activity`,
@@ -457,7 +524,7 @@ export class AI4SOCAlertGenerator {
     return {
       platform: 'google-secops',
       alert: googleSecOpsAlert,
-      indexPattern: 'ai4soc-google-secops-*'
+      indexPattern: '.alerts-security.alerts-*'  // Use standard Kibana Security alert index
     };
   }
 

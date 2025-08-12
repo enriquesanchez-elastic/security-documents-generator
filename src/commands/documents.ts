@@ -996,12 +996,13 @@ export const generateAlerts = async (
 
     // Use appropriate index based on alert type
     if (useAI4SOC && (alert as any)._ai4soc_platform) {
-      // Use AI4SOC-specific index pattern and batch operations
-      const targetIndex = `ai4soc-${(alert as any)._ai4soc_platform}-${space}`;
+      // AI4SOC alerts now go to standard security alert index (same as regular alerts)
+      const targetIndex = getAlertIndex(space);
       // Clean up temporary metadata
       delete (alert as any)._ai4soc_index_pattern;
       delete (alert as any)._ai4soc_platform;
-      return ai4socAlertToBatchOps(alert, targetIndex);
+      // Use standard alert batch operations since AI4SOC alerts are now proper Kibana alerts
+      return alertToBatchOps(alert, targetIndex);
     } else {
       // Use standard security alert index and batch operations
       return alertToBatchOps(alert, getAlertIndex(space));
