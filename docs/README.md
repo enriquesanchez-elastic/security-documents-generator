@@ -18,6 +18,13 @@ Complete guide for generating security data that appears directly in Kibana Clou
 - **Multi-Field Enrichment**: Threat intelligence, behavioral analytics, and security scores
 - **Visual Event Analyzer**: Linux process events with complete correlation support
 
+### 🏢 **[AI4SOC Platform Support](ai4soc-platform-support.md)** ⭐
+Multi-platform security alert generation for AI4SOC product tier:
+- **3 Major Platforms**: Splunk, SentinelOne, and Google SecOps native formats
+- **Platform-Specific Events**: File access, process creation, network monitoring
+- **Cross-Platform Integration**: MITRE ATT&CK, themes, and Visual Event Analyzer
+- **Enterprise Testing**: SOC training, correlation analysis, and product demonstrations
+
 ### 🧠 **[Knowledge Base Integration](knowledge-base-integration.md)** ⭐
 Comprehensive guide for creating AI Assistant Knowledge Base documents:
 - **ELSER v2 Integration**: Semantic text fields optimized for AI Assistant

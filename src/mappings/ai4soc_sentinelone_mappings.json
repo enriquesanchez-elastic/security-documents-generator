@@ -1,0 +1,270 @@
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    },
+    "alertInfo": {
+      "properties": {
+        "alertId": {
+          "type": "keyword"
+        },
+        "analystVerdict": {
+          "type": "keyword"
+        },
+        "createdAt": {
+          "type": "date"
+        },
+        "dvEventId": {
+          "type": "keyword"
+        },
+        "eventType": {
+          "type": "keyword"
+        },
+        "hitType": {
+          "type": "keyword"
+        },
+        "incidentStatus": {
+          "type": "keyword"
+        },
+        "isEdr": {
+          "type": "boolean"
+        },
+        "reportedAt": {
+          "type": "date"
+        },
+        "source": {
+          "type": "keyword"
+        },
+        "updatedAt": {
+          "type": "date"
+        }
+      }
+    },
+    "ruleInfo": {
+      "properties": {
+        "name": {
+          "type": "text"
+        },
+        "description": {
+          "type": "text"
+        },
+        "severity": {
+          "type": "keyword"
+        },
+        "ruleId": {
+          "type": "keyword"
+        },
+        "treatAsThreat": {
+          "type": "keyword"
+        }
+      }
+    },
+    "agentDetectionInfo": {
+      "properties": {
+        "agentDetectionState": {
+          "type": "keyword"
+        },
+        "agentId": {
+          "type": "keyword"
+        },
+        "agentIpV4": {
+          "type": "ip"
+        },
+        "agentIpV6": {
+          "type": "keyword"
+        },
+        "agentLastLoggedInUserName": {
+          "type": "keyword"
+        },
+        "agentMitigationMode": {
+          "type": "keyword"
+        },
+        "agentOsName": {
+          "type": "keyword"
+        },
+        "agentOsRevision": {
+          "type": "keyword"
+        },
+        "agentRegisteredAt": {
+          "type": "date"
+        },
+        "agentVersion": {
+          "type": "keyword"
+        },
+        "externalIp": {
+          "type": "ip"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "uuid": {
+          "type": "keyword"
+        }
+      }
+    },
+    "threatInfo": {
+      "properties": {
+        "classification": {
+          "type": "keyword"
+        },
+        "classificationSource": {
+          "type": "keyword"
+        },
+        "cloudFilesHashVerdict": {
+          "type": "keyword"
+        },
+        "confidenceLevel": {
+          "type": "keyword"
+        },
+        "createdAt": {
+          "type": "date"
+        },
+        "engines": {
+          "type": "keyword"
+        },
+        "externalTicketExists": {
+          "type": "boolean"
+        },
+        "failedActions": {
+          "type": "boolean"
+        },
+        "fileVerificationType": {
+          "type": "keyword"
+        },
+        "identifiedAt": {
+          "type": "date"
+        },
+        "initiatedBy": {
+          "type": "keyword"
+        },
+        "initiatedByDescription": {
+          "type": "text"
+        },
+        "isFileless": {
+          "type": "boolean"
+        },
+        "isValidCertificate": {
+          "type": "boolean"
+        },
+        "mitigatedPreemptively": {
+          "type": "boolean"
+        },
+        "mitigationStatus": {
+          "type": "keyword"
+        },
+        "pendingActions": {
+          "type": "boolean"
+        },
+        "reachedEventsLimit": {
+          "type": "boolean"
+        },
+        "rebootRequired": {
+          "type": "boolean"
+        },
+        "sha1": {
+          "type": "keyword"
+        },
+        "threatId": {
+          "type": "keyword"
+        },
+        "threatName": {
+          "type": "keyword"
+        },
+        "updatedAt": {
+          "type": "date"
+        },
+        "processDisplayName": {
+          "type": "text"
+        },
+        "processName": {
+          "type": "keyword"
+        },
+        "processIntegrityLevel": {
+          "type": "keyword"
+        },
+        "processImageSha1": {
+          "type": "keyword"
+        },
+        "processImagePath": {
+          "type": "keyword"
+        },
+        "parentProcessName": {
+          "type": "keyword"
+        },
+        "commandline": {
+          "type": "text"
+        },
+        "filePath": {
+          "type": "keyword"
+        },
+        "fileDisplayName": {
+          "type": "keyword"
+        },
+        "fileSha1": {
+          "type": "keyword"
+        }
+      }
+    },
+    "containerInfo": {
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "image": {
+          "type": "keyword"
+        },
+        "labels": {
+          "type": "text"
+        },
+        "name": {
+          "type": "keyword"
+        }
+      }
+    },
+    "kubernetesInfo": {
+      "properties": {
+        "cluster": {
+          "type": "keyword"
+        },
+        "namespace": {
+          "type": "keyword"
+        },
+        "node": {
+          "type": "keyword"
+        },
+        "pod": {
+          "type": "keyword"
+        }
+      }
+    },
+    "mitre": {
+      "properties": {
+        "technique_id": {
+          "type": "keyword"
+        },
+        "technique_name": {
+          "type": "keyword"
+        },
+        "tactic": {
+          "type": "keyword"
+        },
+        "subtechnique": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ai4soc": {
+      "properties": {
+        "platform": {
+          "type": "keyword"
+        },
+        "version": {
+          "type": "keyword"
+        },
+        "generated_by": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

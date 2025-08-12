@@ -169,8 +169,23 @@ program
     'generate Visual Event Analyzer compatible data with process entity tracking',
     false,
   )
+  .option(
+    '--integrations',
+    'enable integration data coordination with rules for proper Kibana UI display',
+    false,
+  )
+  .option(
+    '--ai4soc',
+    'generate AI4SOC platform-specific alerts for Splunk, SentinelOne, and Google SecOps',
+    false,
+  )
+  .option(
+    '--platform <platform>',
+    'target AI4SOC platform: splunk, sentinelone, google-secops, all (requires --ai4soc)',
+    'all',
+  )
   .description(
-    'Generate AI-powered security alerts with optional MITRE ATT&CK scenarios',
+    'Generate AI-powered security alerts with optional MITRE ATT&CK scenarios and AI4SOC platform support',
   )
   .action(async (options) => {
     const alertsCount = parseInt(options.n || '1');
@@ -194,6 +209,8 @@ program
     const sessionView = options.sessionView || false;
     const visualAnalyzer = options.visualAnalyzer || false;
     const theme = options.theme;
+    const useAI4SOC = options.ai4soc || false;
+    const ai4socPlatform = options.platform || 'all';
 
     // Validate case options - only check if user explicitly provided alerts-per-case
     const userProvidedAlertsPerCase =
@@ -310,6 +327,24 @@ program
       }
     }
 
+    // Validate AI4SOC options - only validate if --platform was explicitly provided
+    const userProvidedPlatform = process.argv.includes('--platform');
+    if (userProvidedPlatform && !useAI4SOC) {
+      console.error(
+        'Error: --platform flag requires --ai4soc to be enabled',
+      );
+      process.exit(1);
+    }
+    if (useAI4SOC) {
+      const validPlatforms = ['splunk', 'sentinelone', 'google-secops', 'all'];
+      if (!validPlatforms.includes(ai4socPlatform)) {
+        console.error(
+          `Error: Invalid platform ${ai4socPlatform}. Valid platforms: ${validPlatforms.join(', ')}`,
+        );
+        process.exit(1);
+      }
+    }
+
     // Apply Phase 3 configuration overrides if flags are used
     if (
       useClaude ||
@@ -407,6 +442,9 @@ program
           theme,
           sessionView,
           visualAnalyzer,
+          options.integrations,
+          useAI4SOC,
+          ai4socPlatform,
         );
       }
 
@@ -432,6 +470,9 @@ program
         theme,
         sessionView,
         visualAnalyzer,
+        options.integrations,
+        useAI4SOC,
+        ai4socPlatform,
       );
     }
   });
@@ -1045,6 +1086,11 @@ program
     'Comma-separated ML modules to process (security_auth,security_windows,security_linux,security_network,security_packetbeat,security_cloudtrail)',
     'security_auth,security_windows,security_linux',
   )
+  .option(
+    '--integrations',
+    'Enable integration data population for rules and alerts coordination',
+    false,
+  )
   .action(async (options) => {
     try {
       const ruleCount = parseInt(options.rules);
@@ -1104,6 +1150,9 @@ program
           `🤖 ML data will be generated for modules: ${mlModules.join(', ')}`,
         );
       }
+      if (options.integrations) {
+        console.log('🔗 Integration data will be populated for rules and alerts coordination');
+      }
 
       if (options.clean === true) {
         await deleteAllRules();
@@ -1120,6 +1169,7 @@ program
           enableMLJobs: options.enableMlJobs,
           generateMLData: options.generateMlData,
           mlModules: mlModules,
+          enableIntegrations: options.integrations,
         },
         options.space,
       );
@@ -2881,6 +2931,50 @@ program
   .action(async () => {
     const { listMLJobs } = await import('./commands/ml_data');
     listMLJobs();
+  });
+
+program
+  .command('setup-ai4soc-mappings')
+  .option('-s <space>', 'Kibana space name', 'default')
+  .description('Setup Elasticsearch mappings for AI4SOC platform alerts')
+  .action(async (options) => {
+    const { setupAllAI4SOCMappings } = await import('./utils/ai4soc_mapping_setup');
+    try {
+      await setupAllAI4SOCMappings(options.s);
+      console.log('✅ AI4SOC mappings setup completed successfully!');
+    } catch (error) {
+      console.error('❌ AI4SOC mappings setup failed:', error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('delete-ai4soc-mappings')
+  .option('-s <space>', 'Kibana space name', 'default')
+  .description('Delete AI4SOC index templates and indices')
+  .action(async (options) => {
+    const { deleteAI4SOCMappings } = await import('./utils/ai4soc_mapping_setup');
+    try {
+      await deleteAI4SOCMappings(options.s);
+      console.log('✅ AI4SOC mappings deleted successfully!');
+    } catch (error) {
+      console.error('❌ AI4SOC mappings deletion failed:', error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('ai4soc-status')
+  .option('-s <space>', 'Kibana space name', 'default')
+  .description('Check AI4SOC index and template status')
+  .action(async (options) => {
+    const { getAI4SOCStatus } = await import('./utils/ai4soc_mapping_setup');
+    try {
+      await getAI4SOCStatus(options.s);
+    } catch (error) {
+      console.error('❌ AI4SOC status check failed:', error);
+      process.exit(1);
+    }
   });
 
 program.parse();

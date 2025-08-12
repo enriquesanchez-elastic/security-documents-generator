@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "AI4SOC Splunk Alert Schema",
+  "description": "Schema for AI4SOC Splunk-formatted security alerts",
+  "properties": {
+    "_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Splunk timestamp"
+    },
+    "_raw": {
+      "type": "string",
+      "description": "Raw log data"
+    },
+    "source": {
+      "type": "string",
+      "description": "Data source identifier"
+    },
+    "sourcetype": {
+      "type": "string",
+      "description": "Splunk sourcetype"
+    },
+    "index": {
+      "type": "string",
+      "description": "Splunk index name"
+    },
+    "host": {
+      "type": "string",
+      "description": "Host identifier"
+    },
+    "splunk_server": {
+      "type": "string",
+      "description": "Splunk server domain"
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique event identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Alert title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Alert description"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["security", "network", "system", "application"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["file_access", "process_creation", "network_access"]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "severity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "created_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "title", "description", "category", "type", "severity"]
+    },
+    "user": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Username"
+        },
+        "domain": {
+          "type": "string",
+          "description": "User domain"
+        },
+        "sid": {
+          "type": "string",
+          "description": "Security identifier"
+        }
+      },
+      "required": ["name"]
+    },
+    "host_info": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Host name"
+        },
+        "os": {
+          "type": "string",
+          "description": "Operating system"
+        },
+        "ip": {
+          "type": "string",
+          "format": "ipv4",
+          "description": "Host IP address"
+        },
+        "mac": {
+          "type": "string",
+          "description": "MAC address"
+        }
+      },
+      "required": ["name", "ip"]
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "src_ip": {
+          "type": "string",
+          "format": "ipv4",
+          "description": "Source IP address"
+        },
+        "dest_ip": {
+          "type": "string",
+          "format": "ipv4",
+          "description": "Destination IP address"
+        },
+        "src_port": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Source port"
+        },
+        "dest_port": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Destination port"
+        }
+      }
+    },
+    "file_path": {
+      "type": "string",
+      "description": "File path for file access events"
+    },
+    "file_size": {
+      "type": "number",
+      "description": "File size in bytes"
+    },
+    "file_hash": {
+      "type": "string",
+      "description": "File hash"
+    },
+    "access_type": {
+      "type": "string",
+      "enum": ["read", "write", "execute", "delete"],
+      "description": "Type of file access"
+    },
+    "process_name": {
+      "type": "string",
+      "description": "Process name"
+    },
+    "process_command": {
+      "type": "string",
+      "description": "Process command line"
+    },
+    "parent_process": {
+      "type": "string",
+      "description": "Parent process name"
+    },
+    "process_id": {
+      "type": "number",
+      "description": "Process ID"
+    },
+    "parent_process_id": {
+      "type": "number",
+      "description": "Parent process ID"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alert tags"
+    },
+    "risk_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Risk score"
+    },
+    "mitre_technique": {
+      "type": "object",
+      "properties": {
+        "technique_id": {
+          "type": "string",
+          "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$"
+        },
+        "technique_name": {
+          "type": "string"
+        },
+        "tactic": {
+          "type": "string"
+        },
+        "subtechnique": {
+          "oneOf": [
+            {
+              "type": "boolean",
+              "const": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^T[0-9]{4}\\.[0-9]{3}$"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "name"]
+            }
+          ]
+        }
+      },
+      "required": ["technique_id", "technique_name", "tactic", "subtechnique"]
+    },
+    "ai4soc": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "const": "splunk"
+        },
+        "version": {
+          "type": "string"
+        },
+        "generated_by": {
+          "type": "string"
+        }
+      },
+      "required": ["platform", "version", "generated_by"]
+    }
+  },
+  "required": [
+    "_time",
+    "_raw",
+    "source",
+    "sourcetype",
+    "index",
+    "host",
+    "event",
+    "user",
+    "host_info",
+    "ai4soc"
+  ]
+}

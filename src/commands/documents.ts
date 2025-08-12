@@ -6,6 +6,7 @@
  * and AI-generated content that varies in schema.
  */
 import createAlerts, { BaseCreateAlertsReturnType } from '../create_alerts';
+import { generateCoordinatedAlert, validateCoordinationForIntegrations } from '../utils/integration_alert_generator';
 import createEvents from '../create_events';
 import eventMappings from '../mappings/eventMappings.json' assert { type: 'json' };
 import { getEsClient, indexCheck } from './utils/indices';
@@ -43,6 +44,7 @@ import {
 } from '../utils/false_positive_generator';
 import { generateFields } from './generate_fields';
 import { createCases, CaseCreationOptions } from '../create_cases';
+import { ai4socAlertGenerator, AI4SOCPlatform } from '../services/ai4soc_alert_generator';
 
 import {
   setGlobalTheme,
@@ -242,6 +244,32 @@ export const alertToBatchOps = (
   ];
 };
 
+/**
+ * Create batch operations for AI4SOC alerts (different structure than Kibana alerts)
+ */
+export const ai4socAlertToBatchOps = (
+  alert: any,
+  index: string,
+): unknown[] => {
+  // Get the appropriate ID field based on AI4SOC platform
+  let documentId;
+  if (alert.event?.id) {
+    documentId = alert.event.id; // Splunk format
+  } else if (alert.id) {
+    documentId = alert.id; // SentinelOne format  
+  } else if (alert.alert?.alertId) {
+    documentId = alert.alert.alertId; // Google SecOps format
+  } else {
+    // Fallback: generate a UUID
+    documentId = require('@faker-js/faker').faker.string.uuid();
+  }
+
+  return [
+    { index: { _index: index, _id: documentId } },
+    { ...alert },
+  ];
+};
+
 // Updated to support AI generation
 const createDocuments = async (
   n: number,
@@ -408,6 +436,9 @@ export const generateAlerts = async (
   theme?: string,
   sessionView = false,
   visualAnalyzer = false,
+  integrations = false,
+  useAI4SOC = false,
+  ai4socPlatform: 'splunk' | 'sentinelone' | 'google-secops' | 'all' = 'all',
 ) => {
   // Clear field template cache for fresh generation
   clearFieldTemplateCache();
@@ -416,6 +447,24 @@ export const generateAlerts = async (
   if (theme) {
     setGlobalTheme(theme);
     console.log(`🎨 Theme applied: ${theme}`);
+  }
+
+  // Validate integration coordination if enabled
+  if (integrations) {
+    const validationResult = validateCoordinationForIntegrations();
+    if (!validationResult.isValid) {
+      console.log(`\n⚠️  Integration Coordination Issue: ${validationResult.message}`);
+      if (validationResult.suggestions) {
+        console.log('💡 Suggestions:');
+        validationResult.suggestions.forEach(suggestion => {
+          console.log(`   • ${suggestion}`);
+        });
+      }
+      console.log('\n🔗 Proceeding with standard alert generation (no integration coordination)');
+      // Continue with regular generation instead of failing
+    } else {
+      console.log(`🔗 ${validationResult.message}`);
+    }
   }
 
   if (userCount > alertCount) {
@@ -432,6 +481,8 @@ export const generateAlerts = async (
     `Generating ${alertCount} alerts containing ${hostCount} hosts and ${userCount} users in space ${space}${
       useAI ? ' using AI' : ''
     }${useMitre ? ' with MITRE ATT&CK' : ''}${
+      useAI4SOC ? ` with AI4SOC platform support (${ai4socPlatform})` : ''
+    }${
       multiFieldConfig
         ? ` with ${multiFieldConfig.fieldCount} additional fields`
         : ''
@@ -473,14 +524,47 @@ export const generateAlerts = async (
     userName: string;
     hostName: string;
   }) => {
-    let alert = createAlerts(no_overrides, {
-      userName,
-      hostName,
-      space,
-      timestampConfig,
-      sessionView,
-      visualAnalyzer,
-    });
+    let alert: any;
+    
+    if (useAI4SOC) {
+      // Generate AI4SOC platform-specific alerts
+      const ai4socAlerts = ai4socAlertGenerator.generateAlert({
+        platform: ai4socPlatform as AI4SOCPlatform,
+        userName,
+        hostName,
+        timestampConfig,
+        useRealisticData: true,
+      });
+      
+      // For now, use the first alert (or a random one if multiple platforms)
+      const selectedAlert = ai4socAlerts[Math.floor(Math.random() * ai4socAlerts.length)];
+      alert = selectedAlert.alert;
+      
+      // Store the selected platform info for indexing
+      (alert as any)._ai4soc_index_pattern = selectedAlert.indexPattern;
+      (alert as any)._ai4soc_platform = selectedAlert.platform;
+    } else if (integrations) {
+      // Use coordinated rule data for proper integration display
+      alert = generateCoordinatedAlert(no_overrides, {
+        userName,
+        hostName,
+        space,
+        timestampConfig,
+        sessionView,
+        visualAnalyzer,
+        useCoordinatedRules: true,
+      });
+    } else {
+      // Use regular alert generation
+      alert = createAlerts(no_overrides, {
+        userName,
+        hostName,
+        space,
+        timestampConfig,
+        sessionView,
+        visualAnalyzer,
+      });
+    }
 
     // Apply multi-field generation if enabled
     alert = await applyMultiFieldGeneration(alert, multiFieldConfig, useMitre);
@@ -491,7 +575,19 @@ export const generateAlerts = async (
       alert = alertsArray[0];
     }
 
-    return alertToBatchOps(alert, getAlertIndex(space));
+    // Use appropriate index based on alert type
+    if (useAI4SOC && (alert as any)._ai4soc_platform) {
+      // Use AI4SOC-specific index pattern and batch operations
+      const targetIndex = `ai4soc-${(alert as any)._ai4soc_platform}-${space}`;
+      // Clean up temporary metadata
+      delete (alert as any)._ai4soc_index_pattern;
+      delete (alert as any)._ai4soc_platform;
+      return ai4socAlertToBatchOps(alert, targetIndex);
+    } else {
+      // Use standard security alert index and batch operations
+      const targetIndex = getAlertIndex(space);
+      return alertToBatchOps(alert, targetIndex);
+    }
   };
 
   console.log('Generating entity names...');
@@ -856,14 +952,35 @@ export const generateAlerts = async (
     userName: string;
     hostName: string;
   }) => {
-    let alert = createAlerts(no_overrides, {
-      userName,
-      hostName,
-      space,
-      timestampConfig,
-      sessionView,
-      visualAnalyzer,
-    });
+    let alert: any;
+    
+    if (useAI4SOC) {
+      // Generate AI4SOC platform-specific alerts
+      const ai4socAlerts = ai4socAlertGenerator.generateAlert({
+        platform: ai4socPlatform as AI4SOCPlatform,
+        userName,
+        hostName,
+        timestampConfig,
+        useRealisticData: true,
+      });
+      
+      // For now, use the first alert (or a random one if multiple platforms)
+      const selectedAlert = ai4socAlerts[Math.floor(Math.random() * ai4socAlerts.length)];
+      alert = selectedAlert.alert;
+      
+      // Store the selected platform info for indexing
+      (alert as any)._ai4soc_index_pattern = selectedAlert.indexPattern;
+      (alert as any)._ai4soc_platform = selectedAlert.platform;
+    } else {
+      alert = createAlerts(no_overrides, {
+        userName,
+        hostName,
+        space,
+        timestampConfig,
+        sessionView,
+        visualAnalyzer,
+      });
+    }
 
     // Apply multi-field generation if enabled
     alert = await applyMultiFieldGeneration(alert, multiFieldConfig, useMitre);
@@ -877,7 +994,18 @@ export const generateAlerts = async (
     // Collect alert for statistics
     allGeneratedAlerts.push(alert);
 
-    return alertToBatchOps(alert, getAlertIndex(space));
+    // Use appropriate index based on alert type
+    if (useAI4SOC && (alert as any)._ai4soc_platform) {
+      // Use AI4SOC-specific index pattern and batch operations
+      const targetIndex = `ai4soc-${(alert as any)._ai4soc_platform}-${space}`;
+      // Clean up temporary metadata
+      delete (alert as any)._ai4soc_index_pattern;
+      delete (alert as any)._ai4soc_platform;
+      return ai4socAlertToBatchOps(alert, targetIndex);
+    } else {
+      // Use standard security alert index and batch operations
+      return alertToBatchOps(alert, getAlertIndex(space));
+    }
   };
 
   console.log('Batching and generating operations...');

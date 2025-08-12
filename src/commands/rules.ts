@@ -13,6 +13,8 @@ import { generateRealisticRuleNamesBatch } from '../utils/ai_service';
 import { MLDataGenerator } from '../ml/ml_data_generator';
 import { MLJobManager } from '../ml/utils/job_manager';
 import { ML_SECURITY_MODULES } from '../ml/types/ml_types';
+import { integrationService, RuleContext } from '../services/integration_service';
+import { ruleCoordinationService, RuleMetadata } from '../services/rule_coordination_service';
 
 const EVENTS_INDEX = 'logs-system.system-default';
 
@@ -68,6 +70,7 @@ interface RuleGenerationOptions {
   enableMLJobs?: boolean;
   generateMLData?: boolean;
   mlModules?: string[];
+  enableIntegrations?: boolean;
 }
 
 interface GapRange {
@@ -1036,7 +1039,22 @@ export const generateRulesAndAlerts = async (
           ? ([...new_terms_fields] as string[])
           : undefined;
 
-      return createRule({
+      // Generate related integrations if enabled
+      let relatedIntegrations: Array<{package: string; version: string; integration?: string}> = [];
+      if (options.enableIntegrations) {
+        const ruleContext: RuleContext = {
+          ruleType: config.ruleType,
+          query: config.ruleQuery,
+          category: config.category,
+          severity: config.severity,
+          riskScore: config.riskScore,
+        };
+        
+        const selectedIntegrations = integrationService.selectIntegrationsForRule(ruleContext);
+        relatedIntegrations = integrationService.formatForRule(selectedIntegrations);
+      }
+
+      const createdRule = await createRule({
         name: aiResult.name,
         description: aiResult.description,
         enabled: true,
@@ -1048,12 +1066,34 @@ export const generateRulesAndAlerts = async (
         interval: options.interval,
         space: space,
         new_terms_fields: processedNewTermsFields,
+        related_integrations: relatedIntegrations,
         ...otherTypeConfig,
       });
+
+      // Store rule metadata for coordination with alerts
+      if (options.enableIntegrations && createdRule) {
+        const ruleMetadata: RuleMetadata = {
+          id: createdRule.id,
+          rule_id: createdRule.id, // Use the returned ID as rule_id
+          name: createdRule.name,
+          type: config.ruleType,
+          related_integrations: relatedIntegrations,
+          severity: config.severity,
+          risk_score: config.riskScore,
+          created_at: new Date().toISOString(),
+        };
+        
+        ruleCoordinationService.addRule(ruleMetadata);
+      }
+
+      return createdRule;
     });
 
-    const batchResults = await Promise.all(batchPromises);
-    ruleResults.push(...batchResults);
+    const batchResults = await Promise.allSettled(batchPromises);
+    const successfulRules = batchResults
+      .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+      .map(result => result.value);
+    ruleResults.push(...successfulRules);
 
     const progress = Math.min(i + BATCH_SIZE, ruleConfigs.length);
     console.log(`✅ Generated ${progress}/${ruleConfigs.length} rules`);

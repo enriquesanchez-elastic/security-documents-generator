@@ -1,0 +1,399 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "AI4SOC Google SecOps Alert Schema",
+  "description": "Schema for AI4SOC Google SecOps-formatted security alerts",
+  "properties": {
+    "alert": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "string",
+          "description": "Alert identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Alert title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Alert description"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "SUSPICIOUS_ACTIVITY",
+            "MALWARE_DETECTION",
+            "NETWORK_ANOMALY",
+            "DATA_BREACH",
+            "PRIVILEGE_ESCALATION"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["NEW", "ACKNOWLEDGED", "IN_PROGRESS", "RESOLVED", "CLOSED"]
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "product": {
+              "type": "string",
+              "description": "Source product"
+            },
+            "vendor": {
+              "type": "string",
+              "description": "Vendor name"
+            },
+            "detector": {
+              "type": "string",
+              "description": "Detector identifier"
+            }
+          },
+          "required": ["product", "vendor", "detector"]
+        },
+        "finding": {
+          "type": "object",
+          "properties": {
+            "findingId": {
+              "type": "string",
+              "description": "Finding identifier"
+            },
+            "findingClass": {
+              "type": "string",
+              "enum": ["FILE_ACCESS", "PROCESS_CREATION", "NETWORK_ACCESS"]
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["LOW", "MEDIUM", "HIGH"]
+            },
+            "verdict": {
+              "type": "string",
+              "enum": ["BENIGN", "SUSPICIOUS", "MALICIOUS"]
+            }
+          },
+          "required": ["findingId", "findingClass", "severity", "confidence", "verdict"]
+        }
+      },
+      "required": [
+        "alertId",
+        "title",
+        "description",
+        "category",
+        "severity",
+        "status",
+        "createTime",
+        "source",
+        "finding"
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "description": "Host name"
+        },
+        "asset": {
+          "type": "object",
+          "properties": {
+            "hostname": {
+              "type": "string",
+              "description": "Asset hostname"
+            },
+            "ip": {
+              "type": "string",
+              "format": "ipv4",
+              "description": "Asset IP address"
+            },
+            "mac": {
+              "type": "string",
+              "description": "MAC address"
+            },
+            "assetId": {
+              "type": "string",
+              "description": "Asset identifier"
+            },
+            "platform": {
+              "type": "string",
+              "enum": ["WINDOWS", "LINUX", "MACOS"]
+            },
+            "platformVersion": {
+              "type": "string",
+              "description": "Platform version"
+            }
+          },
+          "required": ["hostname", "ip", "assetId", "platform"]
+        },
+        "user": {
+          "type": "object",
+          "properties": {
+            "userid": {
+              "type": "string",
+              "description": "User ID"
+            },
+            "displayName": {
+              "type": "string",
+              "description": "User display name"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "User email"
+            },
+            "department": {
+              "type": "string",
+              "description": "User department"
+            }
+          },
+          "required": ["userid"]
+        }
+      },
+      "required": ["hostname", "asset", "user"]
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "sourceIp": {
+          "type": "string",
+          "format": "ipv4",
+          "description": "Source IP address"
+        },
+        "destinationIp": {
+          "type": "string",
+          "format": "ipv4",
+          "description": "Destination IP address"
+        },
+        "sourcePort": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Source port"
+        },
+        "destinationPort": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Destination port"
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["TCP", "UDP", "HTTP", "HTTPS", "ICMP"]
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["INBOUND", "OUTBOUND", "INTERNAL"]
+        }
+      }
+    },
+    "securityMarks": {
+      "type": "object",
+      "properties": {
+        "marks": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "string"
+            }
+          },
+          "description": "Security marks key-value pairs"
+        }
+      },
+      "required": ["marks"]
+    },
+    "src_file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path"
+        },
+        "size": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "hash": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{64}$"
+            },
+            "md5": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{32}$"
+            }
+          }
+        },
+        "mime_type": {
+          "type": "string",
+          "description": "MIME type"
+        }
+      }
+    },
+    "process": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Process name"
+        },
+        "pid": {
+          "type": "number",
+          "description": "Process ID"
+        },
+        "ppid": {
+          "type": "number",
+          "description": "Parent process ID"
+        },
+        "command_line": {
+          "type": "string",
+          "description": "Command line"
+        },
+        "creation_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Process creation time"
+        },
+        "file": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Process file path"
+            },
+            "hash": {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parent_process": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Parent process name"
+        },
+        "pid": {
+          "type": "number",
+          "description": "Parent process ID"
+        }
+      }
+    },
+    "riskScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Risk score"
+    },
+    "mitre": {
+      "type": "object",
+      "properties": {
+        "technique_id": {
+          "type": "string",
+          "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$"
+        },
+        "technique_name": {
+          "type": "string"
+        },
+        "tactic": {
+          "type": "string"
+        },
+        "subtechnique": {
+          "oneOf": [
+            {
+              "type": "boolean",
+              "const": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^T[0-9]{4}\\.[0-9]{3}$"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "name"]
+            }
+          ]
+        }
+      },
+      "required": ["technique_id", "technique_name", "tactic", "subtechnique"]
+    },
+    "timeline": {
+      "type": "object",
+      "properties": {
+        "eventTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Event time"
+        },
+        "ingestionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Ingestion time"
+        },
+        "processingTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Processing time"
+        }
+      },
+      "required": ["eventTime", "ingestionTime", "processingTime"]
+    },
+    "ai4soc": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "const": "google-secops"
+        },
+        "version": {
+          "type": "string"
+        },
+        "generated_by": {
+          "type": "string"
+        }
+      },
+      "required": ["platform", "version", "generated_by"]
+    }
+  },
+  "required": [
+    "alert",
+    "entity",
+    "network",
+    "securityMarks",
+    "timeline",
+    "ai4soc"
+  ]
+}

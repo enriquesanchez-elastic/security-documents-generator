@@ -4,6 +4,7 @@ A powerful tool for generating realistic security scenarios with complete forens
 
 ## 🌟 Key Features
 
+- **🏢 AI4SOC Platform Support**: Generate alerts for Splunk, SentinelOne, and Google SecOps
 - **🌍 Multi-Environment Generation**: Scale across 100s-1000s of simulated environments
 - **🔬 Multi-Field Generation**: Up to 50,000 additional security fields per document
 - **⚔️ Advanced MITRE Integration**: Sub-techniques, attack chains, and tactic focusing
@@ -46,6 +47,7 @@ A powerful tool for generating realistic security scenarios with complete forens
 | **`generate-fields`** | **🔬 Generate fields on demand** | `yarn start generate-fields -n 4000 --categories behavioral_analytics` |
 | **`generate-alerts --multi-field`** | **🔬 Alerts with 10,000+ fields** | `yarn start generate-alerts -n 100 --multi-field --field-count 10000` |
 | **`--visual-analyzer`** | **👁️ Visual Event Analyzer support** | `yarn start generate-alerts -n 50 --visual-analyzer --mitre` |
+| **`--ai4soc --platform`** | **🏢 AI4SOC platform alerts** | `yarn start generate-alerts -n 20 --ai4soc --platform splunk --mitre` |
 
 ### 🗑️ Cleanup Commands
 | Command | Description |
@@ -55,6 +57,7 @@ A powerful tool for generating realistic security scenarios with complete forens
 | `delete-rules` | Clean up detection rules |
 | `delete-cases` | Clean up security cases |
 | `delete-knowledge-base` | Clean up knowledge base documents |
+| `delete-ai4soc-mappings` | Clean up AI4SOC indices and templates |
 | `delete-all` | Delete all generated data |
 
 
@@ -194,6 +197,84 @@ yarn start generate-knowledge-base -n 20 --mitre --categories malware_analysis,f
 ```
 
 **📚 [Full Knowledge Base Documentation →](docs/knowledge-base-integration.md)**
+
+## 🏢 AI4SOC Platform Support
+
+### **🎯 Multi-Platform Security Alert Generation**
+Generate realistic, platform-specific security alerts for major SIEM and security platforms:
+
+```bash
+# Splunk alerts with MITRE integration
+yarn start generate-alerts -n 15 --ai4soc --platform splunk --mitre
+
+# SentinelOne alerts with themed data
+yarn start generate-alerts -n 10 --ai4soc --platform sentinelone --theme marvel
+
+# Google SecOps alerts with multi-field enrichment  
+yarn start generate-alerts -n 20 --ai4soc --platform google-secops --multi-field
+
+# All platforms with complete integration
+yarn start generate-alerts -n 30 --ai4soc --platform all --mitre --theme starwars
+```
+
+### **🛡️ Supported Platforms**
+
+| Platform | Format | Key Features | Example Use Case |
+|----------|--------|-------------|------------------|
+| **Splunk** | Event-based | Severity scoring, file access events, process execution | `_time`, `event.title`, `severity_score`, `file_path` |
+| **SentinelOne** | Agent-centric | Process creation, threat classification, endpoint details | `threatInfo`, `agentDetectionInfo`, `processDisplayName` |
+| **Google SecOps** | Finding-based | Asset information, security marks, risk scoring | `alert.finding`, `entity.asset`, `riskScore` |
+
+### **🔧 Platform Management Commands**
+
+```bash
+# Setup AI4SOC indices and templates (one-time)
+yarn start setup-ai4soc-mappings
+
+# Check AI4SOC platform status
+yarn start ai4soc-status  
+
+# Cleanup AI4SOC indices and templates
+yarn start delete-ai4soc-mappings
+```
+
+### **📋 AI4SOC Index Patterns**
+Each platform creates dedicated indices for proper data organization:
+
+- **Splunk**: `ai4soc-splunk-*` → Raw events with severity scoring
+- **SentinelOne**: `ai4soc-sentinelone-*` → Agent detection and threat data  
+- **Google SecOps**: `ai4soc-google-secops-*` → Findings with asset context
+- **All Platforms**: `ai4soc-*-*` → Cross-platform analysis
+
+### **🚀 AI4SOC Integration Examples**
+
+#### **🏢 Multi-Platform SOC Training**
+```bash
+# Generate training data across all platforms
+yarn start generate-alerts -n 50 --ai4soc --platform all --mitre
+
+# Platform-specific investigation scenarios
+yarn start generate-alerts -n 25 --ai4soc --platform splunk --theme marvel --visual-analyzer
+yarn start generate-alerts -n 25 --ai4soc --platform sentinelone --mitre --multi-field
+yarn start generate-alerts -n 25 --ai4soc --platform google-secops --theme nba
+```
+
+#### **📊 Cross-Platform Correlation Analysis**
+```bash
+# Generate correlated alerts across platforms for same incident
+for platform in splunk sentinelone google-secops; do
+  yarn start generate-alerts -n 10 --ai4soc --platform $platform --mitre --theme starwars
+done
+```
+
+### **🎯 AI4SOC Event Types**
+Each platform generates realistic security events:
+
+| Event Type | Splunk Format | SentinelOne Format | Google SecOps Format |
+|------------|---------------|-------------------|---------------------|
+| **File Access** | `event.type: file_access`<br>`file_path`, `access_type` | `threatInfo.filePath`<br>`threatInfo.processDisplayName` | `src_file.path`<br>`process.name` |
+| **Process Creation** | `process_command`<br>`parent_process` | `threatInfo.processDisplayName`<br>`threatInfo.commandline` | `process.command_line`<br>`parent_process.name` |
+| **Network Access** | `network.src_ip`<br>`network.dest_port` | Container/K8s context | `network.sourceIp`<br>`network.protocol` |
 
 ## 🤖 Machine Learning Anomaly Detection
 

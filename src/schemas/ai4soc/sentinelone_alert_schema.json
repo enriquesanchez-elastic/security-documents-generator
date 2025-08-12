@@ -1,0 +1,381 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "AI4SOC SentinelOne Alert Schema",
+  "description": "Schema for AI4SOC SentinelOne-formatted security alerts",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Alert ID"
+    },
+    "alertInfo": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "string",
+          "description": "Alert identifier"
+        },
+        "analystVerdict": {
+          "type": "string",
+          "enum": ["true_positive", "false_positive", "undefined"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dvEventId": {
+          "type": "string",
+          "description": "Deep Visibility event ID"
+        },
+        "eventType": {
+          "type": "string",
+          "enum": ["threats", "activities", "incidents"]
+        },
+        "hitType": {
+          "type": "string",
+          "enum": ["threats", "activities"]
+        },
+        "incidentStatus": {
+          "type": "string",
+          "enum": ["resolved", "unresolved", "in_progress"]
+        },
+        "isEdr": {
+          "type": "boolean",
+          "description": "Is EDR event"
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "description": "Alert source"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["alertId", "createdAt", "eventType", "source"]
+    },
+    "ruleInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Rule name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Rule description"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        },
+        "ruleId": {
+          "type": "string",
+          "description": "Rule identifier"
+        },
+        "treatAsThreat": {
+          "type": "string",
+          "enum": ["MALICIOUS", "SUSPICIOUS", "BENIGN"]
+        }
+      },
+      "required": ["name", "severity", "ruleId"]
+    },
+    "agentDetectionInfo": {
+      "type": "object",
+      "properties": {
+        "agentDetectionState": {
+          "type": "string",
+          "enum": ["available", "unavailable", "degraded"]
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Agent identifier"
+        },
+        "agentIpV4": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "agentIpV6": {
+          "type": "string",
+          "format": "ipv6"
+        },
+        "agentLastLoggedInUserName": {
+          "type": "string",
+          "description": "Last logged in user"
+        },
+        "agentMitigationMode": {
+          "type": "string",
+          "enum": ["protect", "detect", "disabled"]
+        },
+        "agentOsName": {
+          "type": "string",
+          "enum": ["windows", "linux", "macos"]
+        },
+        "agentOsRevision": {
+          "type": "string",
+          "description": "OS version"
+        },
+        "agentRegisteredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agentVersion": {
+          "type": "string",
+          "description": "Agent version"
+        },
+        "externalIp": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "name": {
+          "type": "string",
+          "description": "Agent/Host name"
+        },
+        "uuid": {
+          "type": "string",
+          "description": "Agent UUID"
+        }
+      },
+      "required": ["agentId", "name", "agentOsName"]
+    },
+    "threatInfo": {
+      "type": "object",
+      "properties": {
+        "classification": {
+          "type": "string",
+          "enum": ["Malware", "PUA", "Trojan", "Adware", "Suspicious"]
+        },
+        "classificationSource": {
+          "type": "string",
+          "enum": ["Engine", "Cloud", "Static"]
+        },
+        "cloudFilesHashVerdict": {
+          "type": "string",
+          "enum": ["malicious", "suspicious", "unknown", "benign"]
+        },
+        "confidenceLevel": {
+          "type": "string",
+          "enum": ["malicious", "suspicious", "unknown"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "engines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Detection engines"
+        },
+        "externalTicketExists": {
+          "type": "boolean"
+        },
+        "failedActions": {
+          "type": "boolean"
+        },
+        "fileVerificationType": {
+          "type": "string",
+          "enum": ["Signed", "NotSigned", "Unknown"]
+        },
+        "identifiedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "initiatedBy": {
+          "type": "string",
+          "description": "Initiation source"
+        },
+        "initiatedByDescription": {
+          "type": "string"
+        },
+        "isFileless": {
+          "type": "boolean"
+        },
+        "isValidCertificate": {
+          "type": "boolean"
+        },
+        "mitigatedPreemptively": {
+          "type": "boolean"
+        },
+        "mitigationStatus": {
+          "type": "string",
+          "enum": ["mitigated", "not_mitigated", "pending"]
+        },
+        "pendingActions": {
+          "type": "boolean"
+        },
+        "reachedEventsLimit": {
+          "type": "boolean"
+        },
+        "rebootRequired": {
+          "type": "boolean"
+        },
+        "sha1": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{40}$"
+        },
+        "threatId": {
+          "type": "string",
+          "description": "Threat identifier"
+        },
+        "threatName": {
+          "type": "string",
+          "description": "Threat name"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "processDisplayName": {
+          "type": "string",
+          "description": "Process display name"
+        },
+        "processName": {
+          "type": "string",
+          "description": "Process name"
+        },
+        "processIntegrityLevel": {
+          "type": "string",
+          "enum": ["System", "High", "Medium", "Low"]
+        },
+        "processImageSha1": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{40}$"
+        },
+        "processImagePath": {
+          "type": "string",
+          "description": "Process image path"
+        },
+        "parentProcessName": {
+          "type": "string",
+          "description": "Parent process name"
+        },
+        "commandline": {
+          "type": "string",
+          "description": "Command line"
+        },
+        "filePath": {
+          "type": "string",
+          "description": "File path"
+        },
+        "fileDisplayName": {
+          "type": "string",
+          "description": "File display name"
+        },
+        "fileSha1": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{40}$"
+        }
+      },
+      "required": ["classification", "confidenceLevel", "createdAt", "threatId", "threatName"]
+    },
+    "containerInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Container ID"
+        },
+        "image": {
+          "type": "string",
+          "description": "Container image"
+        },
+        "labels": {
+          "type": "string",
+          "description": "Container labels"
+        },
+        "name": {
+          "type": "string",
+          "description": "Container name"
+        }
+      }
+    },
+    "kubernetesInfo": {
+      "type": "object",
+      "properties": {
+        "cluster": {
+          "type": "string",
+          "description": "Kubernetes cluster"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace"
+        },
+        "node": {
+          "type": "string",
+          "description": "Kubernetes node"
+        },
+        "pod": {
+          "type": "string",
+          "description": "Kubernetes pod"
+        }
+      }
+    },
+    "mitre": {
+      "type": "object",
+      "properties": {
+        "technique_id": {
+          "type": "string",
+          "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$"
+        },
+        "technique_name": {
+          "type": "string"
+        },
+        "tactic": {
+          "type": "string"
+        },
+        "subtechnique": {
+          "oneOf": [
+            {
+              "type": "boolean",
+              "const": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^T[0-9]{4}\\.[0-9]{3}$"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "name"]
+            }
+          ]
+        }
+      },
+      "required": ["technique_id", "technique_name", "tactic", "subtechnique"]
+    },
+    "ai4soc": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "const": "sentinelone"
+        },
+        "version": {
+          "type": "string"
+        },
+        "generated_by": {
+          "type": "string"
+        }
+      },
+      "required": ["platform", "version", "generated_by"]
+    }
+  },
+  "required": [
+    "id",
+    "alertInfo",
+    "ruleInfo",
+    "agentDetectionInfo",
+    "threatInfo",
+    "ai4soc"
+  ]
+}

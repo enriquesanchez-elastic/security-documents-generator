@@ -164,6 +164,7 @@ export const createRule = ({
   query,
   from,
   interval,
+  related_integrations,
   // Rule type specific parameters
   threshold_field,
   threshold_value,
@@ -194,6 +195,7 @@ export const createRule = ({
   query?: string;
   from?: string;
   interval?: string;
+  related_integrations?: Array<{package: string; version: string; integration?: string}>;
   // Type-specific parameters
   threshold_field?: string[];
   threshold_value?: number;
@@ -223,7 +225,7 @@ export const createRule = ({
     tags: [],
     filters: [],
     required_fields: [],
-    related_integrations: [],
+    related_integrations: related_integrations || [],
   };
 
   // Type-specific configurations

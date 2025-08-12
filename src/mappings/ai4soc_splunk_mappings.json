@@ -1,0 +1,166 @@
+{
+  "properties": {
+    "_time": {
+      "type": "date"
+    },
+    "_raw": {
+      "type": "text"
+    },
+    "source": {
+      "type": "keyword"
+    },
+    "sourcetype": {
+      "type": "keyword"
+    },
+    "index": {
+      "type": "keyword"
+    },
+    "host": {
+      "type": "keyword"
+    },
+    "splunk_server": {
+      "type": "keyword"
+    },
+    "event": {
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "title": {
+          "type": "text"
+        },
+        "description": {
+          "type": "text"
+        },
+        "category": {
+          "type": "keyword"
+        },
+        "type": {
+          "type": "keyword"
+        },
+        "severity": {
+          "type": "keyword"
+        },
+        "severity_score": {
+          "type": "integer"
+        },
+        "confidence": {
+          "type": "integer"
+        },
+        "created_time": {
+          "type": "date"
+        },
+        "updated_time": {
+          "type": "date"
+        }
+      }
+    },
+    "user": {
+      "properties": {
+        "name": {
+          "type": "keyword"
+        },
+        "domain": {
+          "type": "keyword"
+        },
+        "sid": {
+          "type": "keyword"
+        }
+      }
+    },
+    "host_info": {
+      "properties": {
+        "name": {
+          "type": "keyword"
+        },
+        "os": {
+          "type": "keyword"
+        },
+        "ip": {
+          "type": "ip"
+        },
+        "mac": {
+          "type": "keyword"
+        }
+      }
+    },
+    "network": {
+      "properties": {
+        "src_ip": {
+          "type": "ip"
+        },
+        "dest_ip": {
+          "type": "ip"
+        },
+        "src_port": {
+          "type": "integer"
+        },
+        "dest_port": {
+          "type": "integer"
+        }
+      }
+    },
+    "file_path": {
+      "type": "keyword"
+    },
+    "file_size": {
+      "type": "long"
+    },
+    "file_hash": {
+      "type": "keyword"
+    },
+    "access_type": {
+      "type": "keyword"
+    },
+    "process_name": {
+      "type": "keyword"
+    },
+    "process_command": {
+      "type": "text"
+    },
+    "parent_process": {
+      "type": "keyword"
+    },
+    "process_id": {
+      "type": "integer"
+    },
+    "parent_process_id": {
+      "type": "integer"
+    },
+    "tags": {
+      "type": "keyword"
+    },
+    "risk_score": {
+      "type": "integer"
+    },
+    "mitre_technique": {
+      "properties": {
+        "technique_id": {
+          "type": "keyword"
+        },
+        "technique_name": {
+          "type": "keyword"
+        },
+        "tactic": {
+          "type": "keyword"
+        },
+        "subtechnique": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ai4soc": {
+      "properties": {
+        "platform": {
+          "type": "keyword"
+        },
+        "version": {
+          "type": "keyword"
+        },
+        "generated_by": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

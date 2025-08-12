@@ -32,11 +32,19 @@ function baseCreateAlerts({
   hostName = 'host-1',
   space = 'default',
   timestampConfig,
+  ruleId,
+  ruleName,
+  ruleType = 'query',
+  relatedIntegrations = [],
 }: {
   userName?: string;
   hostName?: string;
   space?: string;
   timestampConfig?: import('./utils/timestamp_utils').TimestampConfig;
+  ruleId?: string;
+  ruleName?: string;
+  ruleType?: string;
+  relatedIntegrations?: Array<{package: string; version: string; integration?: string}>;
 } = {}) {
   const timestamp = generateTimestamp(timestampConfig);
   const currentTime = new Date().toISOString(); // For rule metadata timestamps
@@ -55,7 +63,7 @@ function baseCreateAlerts({
       author: [],
       false_positives: [],
       from: 'now-360s',
-      rule_id: faker.string.uuid(),
+      rule_id: ruleId || faker.string.uuid(),
       max_signals: 100,
       risk_score_mapping: [],
       severity_mapping: [],
@@ -65,10 +73,10 @@ function baseCreateAlerts({
       version: 3,
       exceptions_list: [],
       immutable: false,
-      related_integrations: [],
+      related_integrations: relatedIntegrations,
       required_fields: [],
       setup: '',
-      type: 'query',
+      type: ruleType,
       language: 'kuery',
       index: ['my*'],
       query: '*',
@@ -77,7 +85,7 @@ function baseCreateAlerts({
     'kibana.alert.rule.category': 'Custom Query Rule',
     'kibana.alert.rule.consumer': 'siem',
     'kibana.alert.rule.execution.uuid': faker.string.uuid(),
-    'kibana.alert.rule.name': faker.helpers.arrayElement(REALISTIC_ALERT_NAMES),
+    'kibana.alert.rule.name': ruleName || faker.helpers.arrayElement(REALISTIC_ALERT_NAMES),
     'kibana.alert.rule.producer': 'siem',
     'kibana.alert.rule.rule_type_id': 'siem.queryRule',
     'kibana.alert.rule.uuid': faker.string.uuid(),
@@ -116,11 +124,11 @@ function baseCreateAlerts({
     'kibana.alert.rule.max_signals': 100,
     'kibana.alert.rule.references': [],
     'kibana.alert.rule.risk_score_mapping': [],
-    'kibana.alert.rule.rule_id': 'cc066b08-b4d2-4e74-81cb-3cda5aaa612d',
+    'kibana.alert.rule.rule_id': ruleId || faker.string.uuid(),
     'kibana.alert.rule.severity_mapping': [],
     'kibana.alert.rule.threat': [],
     'kibana.alert.rule.to': 'now',
-    'kibana.alert.rule.type': 'query',
+    'kibana.alert.rule.type': ruleType,
     'kibana.alert.rule.updated_at': currentTime,
     'kibana.alert.rule.updated_by': 'elastic',
     'kibana.alert.rule.version': 3,
@@ -144,6 +152,10 @@ export default function createAlerts<O extends object>(
     timestampConfig,
     sessionView,
     visualAnalyzer,
+    ruleId,
+    ruleName,
+    ruleType,
+    relatedIntegrations,
   }: {
     userName?: string;
     hostName?: string;
@@ -151,6 +163,10 @@ export default function createAlerts<O extends object>(
     timestampConfig?: import('./utils/timestamp_utils').TimestampConfig;
     sessionView?: boolean;
     visualAnalyzer?: boolean;
+    ruleId?: string;
+    ruleName?: string;
+    ruleType?: string;
+    relatedIntegrations?: Array<{package: string; version: string; integration?: string}>;
   } = {},
 ): O & BaseCreateAlertsReturnType {
   let baseAlert = baseCreateAlerts({
@@ -158,6 +174,10 @@ export default function createAlerts<O extends object>(
     hostName,
     space,
     timestampConfig,
+    ruleId,
+    ruleName,
+    ruleType,
+    relatedIntegrations,
   });
 
   // Add Session View fields if enabled
@@ -195,8 +215,8 @@ export default function createAlerts<O extends object>(
         event,
         entityId: visualAnalyzerFields['process.entity_id'],
         timestamp: generateTimestamp(timestampConfig),
-        hostName,
-        userName
+        hostName: hostName || 'unknown-host',
+        userName: userName || 'unknown-user'
       });
     }
     

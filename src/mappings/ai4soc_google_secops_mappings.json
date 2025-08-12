@@ -1,0 +1,253 @@
+{
+  "properties": {
+    "alert": {
+      "properties": {
+        "alertId": {
+          "type": "keyword"
+        },
+        "title": {
+          "type": "text"
+        },
+        "description": {
+          "type": "text"
+        },
+        "category": {
+          "type": "keyword"
+        },
+        "severity": {
+          "type": "keyword"
+        },
+        "priority": {
+          "type": "keyword"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "createTime": {
+          "type": "date"
+        },
+        "updateTime": {
+          "type": "date"
+        },
+        "source": {
+          "properties": {
+            "product": {
+              "type": "keyword"
+            },
+            "vendor": {
+              "type": "keyword"
+            },
+            "detector": {
+              "type": "keyword"
+            }
+          }
+        },
+        "finding": {
+          "properties": {
+            "findingId": {
+              "type": "keyword"
+            },
+            "findingClass": {
+              "type": "keyword"
+            },
+            "severity": {
+              "type": "keyword"
+            },
+            "confidence": {
+              "type": "keyword"
+            },
+            "verdict": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    },
+    "entity": {
+      "properties": {
+        "hostname": {
+          "type": "keyword"
+        },
+        "asset": {
+          "properties": {
+            "hostname": {
+              "type": "keyword"
+            },
+            "ip": {
+              "type": "ip"
+            },
+            "mac": {
+              "type": "keyword"
+            },
+            "assetId": {
+              "type": "keyword"
+            },
+            "platform": {
+              "type": "keyword"
+            },
+            "platformVersion": {
+              "type": "keyword"
+            }
+          }
+        },
+        "user": {
+          "properties": {
+            "userid": {
+              "type": "keyword"
+            },
+            "displayName": {
+              "type": "text"
+            },
+            "email": {
+              "type": "keyword"
+            },
+            "department": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    },
+    "network": {
+      "properties": {
+        "sourceIp": {
+          "type": "ip"
+        },
+        "destinationIp": {
+          "type": "ip"
+        },
+        "sourcePort": {
+          "type": "integer"
+        },
+        "destinationPort": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "keyword"
+        },
+        "direction": {
+          "type": "keyword"
+        }
+      }
+    },
+    "securityMarks": {
+      "properties": {
+        "marks": {
+          "type": "object",
+          "enabled": true
+        }
+      }
+    },
+    "src_file": {
+      "properties": {
+        "path": {
+          "type": "keyword"
+        },
+        "size": {
+          "type": "long"
+        },
+        "hash": {
+          "properties": {
+            "sha256": {
+              "type": "keyword"
+            },
+            "md5": {
+              "type": "keyword"
+            }
+          }
+        },
+        "mime_type": {
+          "type": "keyword"
+        }
+      }
+    },
+    "process": {
+      "properties": {
+        "name": {
+          "type": "keyword"
+        },
+        "pid": {
+          "type": "integer"
+        },
+        "ppid": {
+          "type": "integer"
+        },
+        "command_line": {
+          "type": "text"
+        },
+        "creation_time": {
+          "type": "date"
+        },
+        "file": {
+          "properties": {
+            "path": {
+              "type": "keyword"
+            },
+            "hash": {
+              "properties": {
+                "sha256": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parent_process": {
+      "properties": {
+        "name": {
+          "type": "keyword"
+        },
+        "pid": {
+          "type": "integer"
+        }
+      }
+    },
+    "riskScore": {
+      "type": "integer"
+    },
+    "mitre": {
+      "properties": {
+        "technique_id": {
+          "type": "keyword"
+        },
+        "technique_name": {
+          "type": "keyword"
+        },
+        "tactic": {
+          "type": "keyword"
+        },
+        "subtechnique": {
+          "type": "boolean"
+        }
+      }
+    },
+    "timeline": {
+      "properties": {
+        "eventTime": {
+          "type": "date"
+        },
+        "ingestionTime": {
+          "type": "date"
+        },
+        "processingTime": {
+          "type": "date"
+        }
+      }
+    },
+    "ai4soc": {
+      "properties": {
+        "platform": {
+          "type": "keyword"
+        },
+        "version": {
+          "type": "keyword"
+        },
+        "generated_by": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
