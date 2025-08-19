@@ -19,7 +19,7 @@ import {
 } from './utils/kibana_client';
 import { getEsClient } from './commands/utils/indices';
 import { TimestampConfig } from './utils/timestamp_utils';
-import { generateAIAlert, generateAIAlertBatch } from './utils/ai_service';
+import { generateAIAlert, generateAIAlertBatch } from './services/enhanced_ai_service';
 import cliProgress from 'cli-progress';
 import { faker } from '@faker-js/faker';
 

@@ -1537,12 +1537,12 @@ program
         // Check if realistic mode is enabled
         if (options.realistic) {
           // Use realistic attack engine instead
-          console.log('\n🎭 Initializing Realistic Attack Engine...');
+          console.log('\n🎭 Initializing Attack Simulation Engine...');
 
-          const { RealisticAttackEngine } = await import(
-            './services/realistic_attack_engine'
+          const { AttackSimulationEngine } = await import(
+            './services/attack_simulation_engine'
           );
-          const realisticEngine = new RealisticAttackEngine();
+          const simulationEngine = new AttackSimulationEngine();
 
           const realisticConfig = {
             campaignType: campaignType as
@@ -1588,134 +1588,85 @@ program
             visualAnalyzer,
           };
 
-          const realisticResult =
-            await realisticEngine.generateRealisticCampaign(realisticConfig);
-
-          console.log(`\n🎊 Realistic Campaign Generated Successfully:`);
-          console.log(
-            `  🎯 Attack Stages: ${realisticResult.campaign.stages.length}`,
-          );
-          console.log(
-            `  ⚔️  Campaign: ${realisticResult.campaign.campaign.name}`,
-          );
-          console.log(
-            `  🎭 Threat Actor: ${realisticResult.campaign.campaign.threat_actor}`,
-          );
-          console.log(
-            `  📋 Total Logs: ${realisticResult.stageLogs.reduce((sum, stage) => sum + stage.logs.length, 0)}`,
-          );
-          console.log(
-            `  🚨 Detected Alerts: ${realisticResult.detectedAlerts.length}`,
-          );
-          console.log(
-            `  ⚪ Missed Activities: ${realisticResult.missedActivities.length}`,
-          );
-          console.log(
-            `  📅 Timeline: ${realisticResult.timeline.stages.length} events`,
-          );
-
-          // Display investigation guide
-          console.log(`\n📖 Investigation Guide:`);
-          realisticResult.investigationGuide.slice(0, 3).forEach((step) => {
-            console.log(`  ${step.step}. ${step.action}`);
-          });
-
-          // Index the data to Elasticsearch
-          console.log('\n📤 Indexing realistic campaign data...');
-
-          // Import necessary functions
-          const { getEsClient } = await import('./commands/utils/indices');
-          const { indexCheck } = await import('./commands/utils/indices');
-          const logMappings = await import('./mappings/log_mappings.json', {
-            assert: { type: 'json' },
-          });
-
-          const client = getEsClient();
-          const indexOperations: unknown[] = [];
-
-          // Index all stage logs with environment-specific namespace
-          for (const stage of realisticResult.stageLogs) {
-            for (const log of stage.logs) {
-              const dataset = log['data_stream.dataset'] || 'generic.log';
-              const baseNamespace = log['data_stream.namespace'] || 'default';
-              // Use environment-specific namespace if multi-environment mode
-              const logNamespace =
-                environments > 1 ? targetSpace : baseNamespace;
-              const indexName = `logs-${dataset}-${logNamespace}`;
-
-              // Update log with correct namespace
-              log['data_stream.namespace'] = logNamespace;
-
-              // Ensure index exists
-              await indexCheck(
-                indexName,
-                {
-                  mappings: logMappings.default as any,
-                },
-                false,
-              );
-
-              indexOperations.push({
-                create: {
-                  _index: indexName,
-                  _id: faker.string.uuid(),
-                },
-              });
-              indexOperations.push(log);
+          // Generate attack simulation first
+          const simulation = await simulationEngine.generateAttackSimulation(
+            campaignType as 'apt' | 'ransomware' | 'insider' | 'supply_chain',
+            options.complexity as 'low' | 'medium' | 'high' | 'expert' || 'high',
+            {
+              startDate: options.startDate || '2d',
+              endDate: options.endDate || 'now',
+              pattern: (options.timePattern || 'attack_simulation') as
+                | 'uniform'
+                | 'business_hours'
+                | 'random'
+                | 'attack_simulation'
+                | 'weekend_heavy',
             }
-          }
+          );
 
-          // Index detected alerts with environment-specific space
-          const { getAlertIndex } = await import('./utils/get_alert_index');
-          const alertIndex = getAlertIndex(targetSpace);
-          for (const alert of realisticResult.detectedAlerts) {
-            // Update alert space IDs for multi-environment
-            alert['kibana.space_ids'] = [targetSpace];
+          // Generate campaign events using the simulation
+          const campaignEvents = await simulationEngine.generateCampaignEvents(
+            simulation,
+            targetCount,
+            eventCount,
+            targetSpace,
+            useMitre,
+            {
+              startDate: options.startDate || '2d',
+              endDate: options.endDate || 'now',
+              pattern: (options.timePattern || 'attack_simulation') as
+                | 'uniform'
+                | 'business_hours'
+                | 'random'
+                | 'attack_simulation'
+                | 'weekend_heavy',
+            },
+            sessionView,
+            visualAnalyzer
+          );
 
-            indexOperations.push({
-              create: {
-                _index: alertIndex,
-                _id: alert['kibana.alert.uuid'],
-              },
-            });
-            indexOperations.push(alert);
-          }
+          console.log(`\n🎊 Attack Campaign Generated Successfully:`);
+          console.log(
+            `  🎯 Attack Stages: ${simulation.campaign.stages.length}`,
+          );
+          console.log(
+            `  📊 Total Events: ${campaignEvents.length}`,
+          );
+          console.log(
+            `  ⚔️  Campaign: ${simulation.campaign.name}`,
+          );
+          console.log(
+            `  🎭 Threat Actor: ${simulation.campaign.threat_actor}`,
+          );
+          console.log(
+            `  📋 Scenario: ${simulation.scenario.name}`,
+          );
+          console.log(
+            `  ⚪ Complexity: ${simulation.scenario.complexity}`,
+          );
+          console.log(
+            `  📅 Duration: ${simulation.scenario.duration_hours} hours`,
+          );
 
-          // Bulk index everything
-          if (indexOperations.length > 0) {
-            const batchSize = 1000;
-            for (let i = 0; i < indexOperations.length; i += batchSize) {
-              const batch = indexOperations.slice(i, i + batchSize);
-              await client.bulk({ operations: batch, refresh: true });
-
-              if (i + batchSize < indexOperations.length) {
-                process.stdout.write('.');
-              }
-            }
-          }
-
-          console.log('\n\n🎉 Realistic Campaign Complete!');
+          console.log('\n\n🎉 Attack Campaign Complete!');
           console.log(`📍 View in Kibana space: ${targetSpace}`);
           console.log(`🔍 Filter logs with: logs-*`);
           console.log(`🚨 View alerts in Security app`);
           console.log(
-            `📈 ${realisticResult.detectedAlerts.length} alerts triggered by ${realisticResult.stageLogs.reduce((sum, stage) => sum + stage.logs.length, 0)} source logs`,
+            `📈 ${campaignEvents.length} events generated successfully`,
           );
 
-          // Extract and display generated entities from realistic campaign
+          // Extract and display generated entities from campaign events
           const { displayGeneratedEntities } = await import(
             './utils/entity_display'
           );
           const extractedUserNames = new Set<string>();
           const extractedHostNames = new Set<string>();
 
-          // Extract entities from logs and alerts
-          [
-            ...realisticResult.stageLogs.flatMap((stage) => stage.logs),
-            ...realisticResult.detectedAlerts,
-          ].forEach((item) => {
-            if (item['user.name']) extractedUserNames.add(item['user.name']);
-            if (item['host.name']) extractedHostNames.add(item['host.name']);
+          // Extract entities from campaign events
+          campaignEvents.forEach((event) => {
+            if (event['user.name']) extractedUserNames.add(event['user.name']);
+            if (event['host.name']) extractedHostNames.add(event['host.name']);
           });
 
           displayGeneratedEntities(

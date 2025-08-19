@@ -9,7 +9,7 @@ import { getEsClient } from './utils/indices';
 import moment from 'moment';
 import { chunk } from 'lodash-es';
 import { createRule, getAllRules, bulkDeleteRules } from '../utils/kibana_api';
-import { generateRealisticRuleNamesBatch } from '../utils/ai_service';
+import { generateRealisticRuleNamesBatch } from '../services/enhanced_ai_service';
 import { MLDataGenerator } from '../ml/ml_data_generator';
 import { MLJobManager } from '../ml/utils/job_manager';
 import { ML_SECURITY_MODULES } from '../ml/types/ml_types';

@@ -9,6 +9,7 @@ import { getEsClient } from './utils/indices';
 import {
   generateElasticsearchMapping,
   generateSecurityFieldMapping,
+  generateSecurityDynamicTemplates,
 } from '../utils/dynamic_mapping_generator';
 
 /**
@@ -77,19 +78,25 @@ export async function setupSecurityMappings(): Promise<void> {
       }
     }
 
-    // Create a simple component template for future indices
+    // Create a comprehensive component template with dynamic templates for future indices
     const componentTemplate = {
       template: {
-        mappings: mapping.mappings,
+        mappings: {
+          ...mapping.mappings,
+          dynamic_templates: generateSecurityDynamicTemplates(),
+        },
         settings: {
           'index.mapping.total_fields.limit': 50000,
           'index.mapping.depth.limit': 20,
+          'index.mapping.coerce': false,
+          'index.mapping.ignore_malformed': false,
         },
       },
       _meta: {
-        description: 'Security multi-field mappings component',
+        description: 'Security multi-field mappings component with dynamic templates',
         created_by: 'security-documents-generator',
         field_count: Object.keys(securityFields).length,
+        dynamic_templates_count: generateSecurityDynamicTemplates().length,
       },
     };
 
@@ -98,10 +105,36 @@ export async function setupSecurityMappings(): Promise<void> {
       body: componentTemplate as any, // Type assertion for ES client compatibility
     });
 
+    // Create index template that uses the component template for all security alert indices
+    const indexTemplate = {
+      index_patterns: ['.alerts-security.alerts-*'],
+      composed_of: ['security-multi-fields-component'],
+      priority: 100, // Higher priority than default templates
+      template: {
+        settings: {
+          'index.mapping.total_fields.limit': 50000,
+          'index.mapping.depth.limit': 20,
+        }
+      },
+      _meta: {
+        description: 'Security alerts index template with dynamic field mapping',
+        created_by: 'security-documents-generator',
+        version: 1
+      }
+    };
+
+    await client.indices.putIndexTemplate({
+      name: 'security-alerts-dynamic-mapping',
+      body: indexTemplate as any,
+    });
+
     console.log('✅ Security field mappings setup completed!');
     console.log(`📊 Updated ${updatedCount} existing indices`);
     console.log(
       '📋 Created component template: security-multi-fields-component',
+    );
+    console.log(
+      '📋 Created index template: security-alerts-dynamic-mapping',
     );
     console.log('');
     console.log('🎯 Benefits:');

@@ -1903,11 +1903,11 @@ ${useAI ? '🤖 AI-powered generation used.' : ''}`,
     }
 
     if (realistic) {
-      // Use realistic attack engine
-      const { RealisticAttackEngine } = await import(
-        './services/realistic_attack_engine.js'
+      // Use attack simulation engine
+      const { AttackSimulationEngine } = await import(
+        './services/attack_simulation_engine.js'
       );
-      const realisticEngine = new RealisticAttackEngine();
+      const simulationEngine = new AttackSimulationEngine();
 
       const realisticConfig = {
         campaignType,
@@ -1924,8 +1924,42 @@ ${useAI ? '🤖 AI-powered generation used.' : ''}`,
         multiFieldConfig,
       };
 
-      const result =
-        await realisticEngine.generateRealisticCampaign(realisticConfig);
+      // Generate attack simulation first
+      const simulation = await simulationEngine.generateAttackSimulation(
+        campaignType as 'apt' | 'ransomware' | 'insider' | 'supply_chain',
+        complexity as 'low' | 'medium' | 'high' | 'expert' || 'high',
+        {
+          startDate: startDate || '2d',
+          endDate: endDate || 'now',
+          pattern: (timePattern || 'attack_simulation') as
+            | 'uniform'
+            | 'business_hours'
+            | 'random'
+            | 'attack_simulation'
+            | 'weekend_heavy',
+        }
+      );
+
+      // Generate campaign events using the simulation
+      const result = await simulationEngine.generateCampaignEvents(
+        simulation,
+        targetCount,
+        eventCount,
+        space,
+        mitre,
+        {
+          startDate: startDate || '2d',
+          endDate: endDate || 'now',
+          pattern: (timePattern || 'attack_simulation') as
+            | 'uniform'
+            | 'business_hours'
+            | 'random'
+            | 'attack_simulation'
+            | 'weekend_heavy',
+        },
+        sessionView || false,
+        visualAnalyzer || false
+      );
 
       // Index the data to Elasticsearch (this was missing!)
       console.error('[MCP] Indexing realistic campaign data...');

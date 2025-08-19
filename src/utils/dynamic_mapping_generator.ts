@@ -5,6 +5,287 @@
  * to ensure they appear correctly in Kibana instead of as unmapped fields.
  */
 
+/**
+ * Generate comprehensive dynamic templates for multi-field patterns
+ * Used by both fix_unmapped_fields.ts and setup_mappings.ts
+ */
+export function generateSecurityDynamicTemplates(): any[] {
+  return [
+    // Behavioral analytics fields
+    {
+      behavioral_numbers: {
+        path_match: 'behavioral.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      behavioral_floats: {
+        path_match: 'behavioral.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      behavioral_keywords: {
+        path_match: 'behavioral.*',
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // User behavior fields
+    {
+      user_behavior_numbers: {
+        path_match: 'user_behavior.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      user_behavior_floats: {
+        path_match: 'user_behavior.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      user_behavior_keywords: {
+        path_match: 'user_behavior.*',
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Host behavior fields
+    {
+      host_behavior_numbers: {
+        path_match: 'host_behavior.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      host_behavior_floats: {
+        path_match: 'host_behavior.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      host_behavior_keywords: {
+        path_match: 'host_behavior.*',
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Entity behavior fields
+    {
+      entity_behavior_numbers: {
+        path_match: 'entity_behavior.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      entity_behavior_floats: {
+        path_match: 'entity_behavior.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      entity_behavior_keywords: {
+        path_match: 'entity_behavior.*',
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Threat intelligence fields - extending existing ECS threat.* patterns
+    {
+      threat_numbers: {
+        path_match: 'threat.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      threat_floats: {
+        path_match: 'threat.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      threat_keywords: {
+        path_match: 'threat.*',
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Security scores and performance metrics
+    {
+      security_numbers: {
+        path_match: 'security.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      security_floats: {
+        path_match: 'security.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      security_keywords: {
+        path_match: 'security.*',
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Performance metrics
+    {
+      performance_numbers: {
+        path_match: 'performance.*',
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      performance_floats: {
+        path_match: 'performance.*',
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Unified generation metadata fields
+    {
+      unified_metadata: {
+        path_match: '_unified_generation_metadata.*',
+        match_mapping_type: '*',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Generic catch-all for remaining numeric fields
+    {
+      all_numbers: {
+        match_mapping_type: 'long',
+        mapping: {
+          type: 'long',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    {
+      all_floats: {
+        match_mapping_type: 'double',
+        mapping: {
+          type: 'double',
+          index: true,
+          doc_values: true,
+        },
+      },
+    },
+    // Generic catch-all for string fields
+    {
+      all_strings: {
+        match_mapping_type: 'string',
+        mapping: {
+          type: 'keyword',
+          index: true,
+          doc_values: true,
+          ignore_above: 1024,
+        },
+      },
+    },
+  ];
+}
+
 export interface ElasticsearchFieldMapping {
   type: string;
   properties?: Record<string, ElasticsearchFieldMapping>;
@@ -366,11 +647,11 @@ export function generateSecurityFieldMapping(): Record<
       description: 'Deviation from baseline behavior',
     },
     'user_behavior.failed_login_count_24h': {
-      type: 'integer',
+      type: 'float',
       description: 'Failed login attempts in 24 hours',
     },
     'user_behavior.session_duration_avg': {
-      type: 'integer',
+      type: 'float',
       description: 'Average session duration in seconds',
     },
     'user_behavior.off_hours_activity_score': {
@@ -378,7 +659,7 @@ export function generateSecurityFieldMapping(): Record<
       description: 'Off-hours activity anomaly score',
     },
     'user_behavior.unique_hosts_accessed_24h': {
-      type: 'integer',
+      type: 'float',
       description: 'Unique hosts accessed in 24 hours',
     },
 
@@ -395,7 +676,7 @@ export function generateSecurityFieldMapping(): Record<
       description: 'Baseline memory usage percentage',
     },
     'host_behavior.network_traffic_baseline': {
-      type: 'integer',
+      type: 'float',
       description: 'Baseline network traffic in bytes',
     },
     'host_behavior.process_creation_rate': {
@@ -430,7 +711,7 @@ export function generateSecurityFieldMapping(): Record<
       description: 'Identified malware family',
     },
     'threat.enrichment.ioc_matches': {
-      type: 'integer',
+      type: 'float',
       description: 'Number of IoC matches',
     },
     'threat.enrichment.first_seen': {

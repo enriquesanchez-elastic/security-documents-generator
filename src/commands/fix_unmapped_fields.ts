@@ -8,6 +8,7 @@
  */
 
 import { getEsClient } from './utils/indices';
+import { generateSecurityDynamicTemplates } from '../utils/dynamic_mapping_generator';
 
 interface FixOptions {
   reindex?: boolean;
@@ -138,83 +139,7 @@ function createDynamicMapping(): any {
       },
     },
     // Enable dynamic mapping for new field patterns
-    dynamic_templates: [
-      {
-        behavioral_numbers: {
-          path_match: 'behavioral.*',
-          match_mapping_type: 'long',
-          mapping: {
-            type: 'long',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-      {
-        behavioral_floats: {
-          path_match: 'behavioral.*',
-          match_mapping_type: 'double',
-          mapping: {
-            type: 'double',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-      {
-        behavioral_keywords: {
-          path_match: 'behavioral.*',
-          match_mapping_type: 'string',
-          mapping: {
-            type: 'keyword',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-      {
-        user_behavior_numbers: {
-          path_match: 'user_behavior.*',
-          match_mapping_type: 'long',
-          mapping: {
-            type: 'long',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-      {
-        user_behavior_floats: {
-          path_match: 'user_behavior.*',
-          match_mapping_type: 'double',
-          mapping: {
-            type: 'double',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-      {
-        all_numbers: {
-          match_mapping_type: 'long',
-          mapping: {
-            type: 'long',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-      {
-        all_floats: {
-          match_mapping_type: 'double',
-          mapping: {
-            type: 'double',
-            index: true,
-            doc_values: true,
-          },
-        },
-      },
-    ],
+    dynamic_templates: generateSecurityDynamicTemplates(),
   };
 }
 

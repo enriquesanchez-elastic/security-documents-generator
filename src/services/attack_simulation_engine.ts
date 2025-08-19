@@ -8,7 +8,7 @@
 
 import { faker } from '@faker-js/faker';
 import { TimestampConfig, getTimeRange } from '../utils/timestamp_utils';
-import { generateAIAlert } from '../utils/ai_service';
+import { generateAIAlert } from './enhanced_ai_service';
 import { BaseCreateAlertsReturnType } from '../create_alerts';
 
 // Import attack scenarios
