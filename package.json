@@ -5,12 +5,16 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
     "start": "tsx src/index",
     "mcp": "tsx src/mcp_server.ts",
     "lint": "eslint",
-    "checks": "yarn typecheck && yarn lint"
+    "checks": "yarn typecheck && yarn lint && yarn test:run"
   },
   "engines": {
     "node": "23.11.1",
@@ -49,6 +53,8 @@
     "@types/uuid": "10.0.0",
     "@typescript-eslint/eslint-plugin": "8.33.0",
     "@typescript-eslint/parser": "8.33.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "esbuild": "0.25.5",
     "eslint": "9.27.0",
     "eslint-config-airbnb": "19.0.4",
@@ -60,7 +66,9 @@
     "eslint-plugin-prettier": "5.4.0",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "5.2.0",
+    "happy-dom": "^18.0.1",
     "prettier": "3.5.3",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^3.2.4"
   }
 }
